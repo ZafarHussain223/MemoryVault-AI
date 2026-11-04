@@ -1,0 +1,25 @@
+# Security decisions and deployment boundaries
+
+Implemented protections include Argon2 password hashing, hashed session/recovery tokens, HTTP-only SameSite=Lax cookies, configurable Secure cookies, exact origin validation, per-session CSRF, owner-scoped lookups and retrieval, parameterized queries, sensitive-route rate limits, private originals, format/size checks, and one-time expiring reset/verification links. Password reset/change revokes existing sessions and recovery tokens. Session revocation only operates on the current user's sessions.
+
+Authentication/recovery forms remain disabled until their client handlers are ready and declare POST as the native method. A pre-hydration submit therefore cannot place a password in a URL query string. Private Markdown disables automatic third-party image requests; raw HTML is not rendered and external links use noreferrer.
+
+Quota checks include notes, edits, uploads and imports. Mutations acquire a database lock before checking quota or document versions. Source versions are checked before committing generated answers, insights, flashcards, quizzes and comparison results. Interrupted/incomplete provider streams are not saved as finished answers. Generated classifications are suggestions and require an explicit user action to apply tags. Contradiction evidence must match actual source excerpts and is presented for review, not as factual certainty.
+
+Public URL ingestion permits only standard HTTP/HTTPS destinations. It rejects credentials, nonstandard ports, local/reserved/private addresses and mixed public/private DNS results. The validated public IP is pinned to the connection, preserving TLS hostname checks. Each redirect is revalidated; requests have timeouts, byte limits and a redirect limit. No user cookie or server API credential is forwarded. Only public article/plain text and public GitHub README content is fetched. Protected or login-required sources return an unavailable state. YouTube imports use a transcript explicitly supplied by the user; the app does not bypass access controls or fabricate transcripts.
+
+AI source excerpts remain untrusted data. Providers receive only selected owner-scoped passages and bounded conversation context. Models have no database or operating-system tools. Prompt instructions are not an authorization boundary; ownership is enforced in the application before retrieval. Production deployments must tell users whether selected source text is sent to an external provider.
+
+ZIP exports include originals and owned documents, collections, conversations, study data, AI insights, relationships and events. They exclude passwords, tokens and embeddings. Export creation locks vault mutations while assembling a private temporary archive. File deletion cascades derived records and redacts saved answers referencing deleted sources. Historical processing event titles and development outbox files still need an explicit retention policy.
+
+Local email mode writes .eml files under private data/outbox. Never serve, commit or share this directory. Real delivery requires MAIL_MODE=smtp and valid SMTP settings. SMTP retries/queueing, mail retention and mandatory verification enforcement still need production hardening.
+
+Before public deployment: configure TLS/secure cookies, an exact APP_ORIGIN, private networking/storage and backups; apply reverse-proxy request limits; review dependencies; isolate document parsing and consider malware scanning; implement transactional object-deletion recovery and durable job leases; validate multi-worker load, storage failures, PostgreSQL/S3/RQ operation and email delivery. The operator recovery command marks interrupted processing as retryable but is not a distributed lease system.
+
+No Windows security policy was disabled. The software has not undergone an independent security audit and is not claimed to be perfectly secure or ready for public multi-tenant release.
+
+Profile uploads decode bounded still raster images, reject SVG/animations and oversized payloads/pixel dimensions, and reencode a fresh JPEG canvas without original metadata. Photos require the owning session; writes also require CSRF. Replacement is one database-row mutation, avoiding orphan originals, and erasure cascades with the account. The photo size limit is separate from the document quota.
+
+Reminders and visit history are owned resources with cascading source/account references. Due delivery serializes on the account row and records notification state in the same transaction. Recall notification generation respects both recall and notification preferences, with daily and remembered-source throttling. Search/open history can be disabled or cleared.
+
+Ingestion completion and failure updates require the current processing claim and document version. Old workers cannot overwrite a successful retry. This does not replace a production worker lease/monitoring system. Test suites explicitly isolate databases, local storage and mail from configured live services.

@@ -1,0 +1,98 @@
+name: memoryvault
+x-api: &api
+  build:
+    context: .
+    dockerfile: infrastructure/Dockerfile.api
+  env_file: .env
+  environment: &environment
+    DATABASE_URL: postgresql+psycopg://vault:${POSTGRES_PASSWORD}@postgres:5432/memoryvault
+    REDIS_URL: redis://redis:6379/0
+    STORAGE_BACKEND: s3
+    S3_ENDPOINT: http://minio:9000
+    S3_BUCKET: ${S3_BUCKET:-memoryvault}
+    S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+    S3_SECRET_KEY: ${S3_SECRET_KEY}
+    EMBEDDING_BACKEND: ${EMBEDDING_BACKEND:-sentence-transformers}
+    HF_HOME: /models
+  volumes:
+    - models:/models
+  restart: unless-stopped
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: vault
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: memoryvault
+    volumes: [postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U vault -d memoryvault]
+      interval: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes: [redis:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      retries: 20
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+    volumes: [objects:/data]
+    ports: [127.0.0.1:9001:9001]
+    healthcheck:
+      test: [CMD, curl, -f, http://localhost:9000/minio/health/live]
+      interval: 5s
+      retries: 20
+  bucket-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio: {condition: service_healthy}
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:-memoryvault}
+    entrypoint: /bin/sh
+    command: ['-c', 'mc alias set local http://minio:9000 "$${S3_ACCESS_KEY}" "$${S3_SECRET_KEY}" && mc mb --ignore-existing "local/$${S3_BUCKET}"']
+  migrate:
+    <<: *api
+    restart: 'no'
+    command: python -m alembic upgrade head
+    depends_on:
+      postgres: {condition: service_healthy}
+  api:
+    <<: *api
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      bucket-init: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 10s
+      retries: 10
+  worker:
+    <<: *api
+    command: python -m app.worker
+    depends_on:
+      api: {condition: service_healthy}
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile.web
+    ports: [127.0.0.1:3000:3000]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:3000').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      retries: 10
+volumes:
+  postgres:
+  redis:
+  objects:
+  models:

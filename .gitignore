@@ -1,0 +1,51 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.eml
+# Vault contents, private exports, backups and local runtimes
+/work/
+data/
+backups/
+outbox/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.gguf
+*.onnx
+# Installed dependencies and generated checks
+node_modules/
+.next/
+.next-*/
+next-env.d.ts
+*.tsbuildinfo
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+test-results/
+playwright-report/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+# Local development records and absolute-machine installation notes
+/IMPLEMENTATION_PROGRESS.md
+/docs/MASTER_SPEC.md
+/docs/LOCAL_AI_SETUP.md
+/docs/design-preview.html
+/docs/screenshots/
+/apps/web/.workspace-*.py
+/services/api/update_ai.py
+/services/api/update_models.py
+/services/api/update_routes.py
+/services/api/chat_routes.txt

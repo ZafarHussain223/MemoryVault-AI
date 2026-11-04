@@ -1,0 +1,25 @@
+# Build images using only the app sources and dependency manifests.
+**
+!apps/
+!apps/web/
+!apps/web/app/
+!apps/web/app/**
+!apps/web/components/
+!apps/web/components/**
+!apps/web/lib/
+!apps/web/lib/**
+!apps/web/next.config.ts
+!apps/web/tsconfig.json
+!apps/web/package.json
+!apps/web/package-lock.json
+!services/
+!services/api/
+!services/api/app/
+!services/api/app/**
+!services/api/alembic/
+!services/api/alembic/**
+!services/api/alembic.ini
+!services/api/requirements*.txt
+**/__pycache__/
+**/*.pyc
+**/.env*

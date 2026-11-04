@@ -1,0 +1,4 @@
+-r requirements-core.txt
+# Ollama serves both models over loopback; no Torch/NumPy runtime is required.
+pytesseract==0.3.13
+PyMuPDF==1.28.2
