@@ -1,5 +1,7 @@
 # MemoryVault AI
 
+[![Build and browser checks](https://github.com/ZafarHussain223/MemoryVault-AI/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/ZafarHussain223/MemoryVault-AI/actions/workflows/checks.yml?query=branch%3Amain)
+
 MemoryVault is a personal knowledge app for saving files, notes and web articles, searching their contents, and asking questions with links to the source. It pairs a Next.js frontend with a FastAPI backend. The default local setup stores each user's vault in SQLite and a private file directory.
 
 ## Run it on Windows
@@ -64,3 +66,9 @@ For scanned PDFs or image text extraction, install Tesseract and the OCR package
 The first command runs the API tests, TypeScript and a production build. Browser workflows use disposable vaults and synthetic fixtures. The Windows browser suite uses Chrome and requires LibreOffice for the PowerPoint preview test. GitHub Actions sets up the Linux test environment on a push or pull request.
 
 See [architecture](docs/ARCHITECTURE.md), [API endpoints](docs/API.md), [feature coverage](docs/FEATURES.md) and [deployment](docs/DEPLOYMENT.md). Private uploads, development credentials, runtime binaries and model weights stay outside version control.
+
+The [changelog](CHANGELOG.md) records shipped changes and dated verification results. The build badge above links to the latest GitHub Actions checks on `main`.
+
+## License
+
+MemoryVault AI source code is available under the [MIT License](LICENSE). Dependencies and separately downloaded AI models retain their respective licenses.
